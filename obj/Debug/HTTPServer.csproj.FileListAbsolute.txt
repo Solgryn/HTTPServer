@@ -1,1 +1,6 @@
 c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\bin\Debug\HTTPServer.exe.config
+c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\bin\Debug\HTTPServer.exe
+c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\bin\Debug\HTTPServer.pdb
+c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\obj\Debug\HTTPServer.csprojResolveAssemblyReference.cache
+c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\obj\Debug\HTTPServer.exe
+c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\obj\Debug\HTTPServer.pdb
