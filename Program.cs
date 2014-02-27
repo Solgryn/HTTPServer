@@ -30,6 +30,13 @@ namespace HTTPServer
                 var message = sr.ReadLine(); //Get a request
                 Console.WriteLine("Client (" + connection.RemoteEndPoint + "): " + message);
 
+                //Get request
+                if (readFirstLine)
+                {
+                    request = message.Split(' ');
+                    readFirstLine = false;
+                }
+
                 //Send a response when request is done
                 if (message == "")
                 {
@@ -38,7 +45,7 @@ namespace HTTPServer
                     response += "Content-Type: text/html\r\n";
                     response += "\r\n";
                     response += "<html><body>";
-                    response += "<b>Hello world.</b>";
+                    response += "<b>Hello, you wrote " + request[1] + "</b>";
                     response += "</body></html>";
                     sw.Write(response);
                     sw.Flush();
