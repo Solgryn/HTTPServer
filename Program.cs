@@ -23,10 +23,26 @@ namespace HTTPServer
             var sr = new StreamReader(ns);
             var sw = new StreamWriter(ns);
 
+            var readFirstLine = true;
+            var request = new[] { "" };
             while (true)
             {
                 var message = sr.ReadLine(); //Get a request
                 Console.WriteLine("Client (" + connection.RemoteEndPoint + "): " + message);
+
+                //Send a response when request is done
+                if (message == "")
+                {
+                    var response = "";
+                    response += "HTTP/1.0 200 OK\r\n";
+                    response += "Content-Type: text/html\r\n";
+                    response += "\r\n";
+                    response += "<html><body>";
+                    response += "<b>Hello world.</b>";
+                    response += "</body></html>";
+                    sw.Write(response);
+                    sw.Flush();
+                }
             }
         }
     }
