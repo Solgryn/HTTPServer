@@ -4,3 +4,5 @@ c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\bin\
 c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\obj\Debug\HTTPServer.csprojResolveAssemblyReference.cache
 c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\obj\Debug\HTTPServer.exe
 c:\users\jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\obj\Debug\HTTPServer.pdb
+C:\Users\Jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\bin\Debug\log4net.dll
+C:\Users\Jesper\documents\visual studio 2012\Projects\HTTPServer\HTTPServer\bin\Debug\log4net.xml

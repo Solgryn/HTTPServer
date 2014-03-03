@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using log4net;
 
 namespace HTTPServer
 {
@@ -11,6 +12,7 @@ namespace HTTPServer
     /// </summary>
     class Client
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(Client));
         private string _response = "";
         private readonly Socket _connection;
         private const string RootCatalog = "c:/temp";
@@ -42,7 +44,7 @@ namespace HTTPServer
                 var message = sr.ReadLine(); //Get a request
                 if (message != null)
                 {
-                    Console.WriteLine("Client (" + _connection.RemoteEndPoint + "): '" + message +"'");
+                    log.Info("Client (" + _connection.RemoteEndPoint + ") message: '" + message);
                 }
 
                 //Get first line from request
@@ -62,7 +64,7 @@ namespace HTTPServer
                         //Is it an illegal protocol?
                         if (request[2] == "HTTP/1.2")
                         {
-                            Console.WriteLine("Illegal protocol");
+                            log.Info("Server response: Illegal protocol");
                             //Create HTTP 404 header
                             _response += "HTTP/1.0 400 Illegal protocol\r\n";
                             _response += "\r\n";
@@ -96,14 +98,14 @@ namespace HTTPServer
                             break;
                         }
                         //If the file doesn't exist, return "404 Not Found"
-                        Console.WriteLine("Not found");
+                        log.Info("Server response: Not Found");
                         //Create HTTP 404 header
                         _response += "HTTP/1.0 404 Not Found\r\n";
                         _response += "\r\n";
                         _response += "<html>404 Not Found</html>";
                         break;
                     }
-                    Console.WriteLine("Illegal request");
+                    log.Info("Server response: Illegal request.");
                     //Create HTTP 400 header
                     _response += "HTTP/1.0 400 Illegal request\r\n";
                     _response += "\r\n";
@@ -115,12 +117,12 @@ namespace HTTPServer
             {
                 sw.Write(_response); //write the response in the streamwriter
                 sw.Flush(); //send the response
-                Console.WriteLine("Sent response.");
+                log.Info("Server response sent");
             }
             finally
             {
                 ns.Close();
-                Console.WriteLine("Closed connection.");
+                log.Info("Closed connection");
             }
         }
     }
