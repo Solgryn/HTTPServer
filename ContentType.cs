@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HTTPServer
 {
     static class ContentType
     {
-        private static Dictionary<string, string> types = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> types = new Dictionary<string, string>();
 
         static ContentType()
         {

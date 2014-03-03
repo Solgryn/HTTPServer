@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Net.Mime;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using log4net;
@@ -13,7 +12,7 @@ namespace HTTPServer
     /// </summary>
     class Client
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(Client));
+        private static readonly ILog Log = LogManager.GetLogger(typeof(Client));
         private string _response = "";
         private readonly Socket _connection;
         private const string RootCatalog = "c:/temp";
@@ -46,7 +45,7 @@ namespace HTTPServer
                 var message = sr.ReadLine(); //Get a request
                 if (message != null)
                 {
-                    log.Info("Client (" + _connection.RemoteEndPoint + ") message: '" + message);
+                    Log.Info("Client (" + _connection.RemoteEndPoint + ") message: '" + message);
                 }
 
                 //Get first line from request
@@ -67,7 +66,7 @@ namespace HTTPServer
                         //Is it an illegal protocol?
                         if (request[2] == "HTTP/1.2")
                         {
-                            log.Info("Server response: Illegal protocol");
+                            Log.Info("Server response: Illegal protocol");
                             //Create HTTP 404 header
                             _response += "HTTP/1.0 400 Illegal protocol\r\n";
                             _response += "\r\n";
@@ -86,7 +85,7 @@ namespace HTTPServer
                                 break;
                             }
 
-                            log.Info("Server response: OK, Content-type: " + ContentType.GetContentType(filename));
+                            Log.Info("Server response: OK, Content-type: " + ContentType.GetContentType(filename));
                             var fileStream = new FileStream(RootCatalog + filename, FileMode.Open, FileAccess.Read); //Initialize a filestream
                             //Create HTTP header
                             _response += "HTTP/1.0 200 OK\r\n";
@@ -109,21 +108,21 @@ namespace HTTPServer
                                         //use a streamreader to read the filestream
                                     {
                                         _response += sr2.ReadToEnd(); //add contents to the response string
-                                        log.Debug(sr2.ReadToEnd());
+                                        Log.Debug(sr2.ReadToEnd());
                                     }
                                     break;
                             }
                             break;
                         }
                         //If the file doesn't exist, return "404 Not Found"
-                        log.Info("Server response: Not Found");
+                        Log.Info("Server response: Not Found");
                         //Create HTTP 404 header
                         _response += "HTTP/1.0 404 Not Found\r\n";
                         _response += "\r\n";
                         _response += "<html>404 Not Found</html>";
                         break;
                     }
-                    log.Info("Server response: Illegal request.");
+                    Log.Info("Server response: Illegal request.");
                     //Create HTTP 400 header
                     _response += "HTTP/1.0 400 Illegal request\r\n";
                     _response += "\r\n";
@@ -140,11 +139,11 @@ namespace HTTPServer
                 _response += "\r\n"; //End the response with an empty line
                 sw.Write(_response); //write the response in the streamwriter
                 sw.Flush(); //send the response
-                log.Info("Server response sent");
+                Log.Info("Server response sent");
             }
             finally //Close the connection
             {
-                log.Info("Closed connection");
+                Log.Info("Closed connection");
                 ns.Close(); //Close network stream
                 _connection.Close(); //Close connection socket
             }
