@@ -58,6 +58,7 @@ namespace HTTPServer
                 //Send a response when request is done
                 if (message == "")
                 {
+                    var filename = request[1];
                     //Is the request in the correct format?
                     if (Regex.IsMatch(requestStr, @"^[A-Z]{3,4} /.{0,150} HTTP/[0-9]\.[0-9]$") && Methods.Contains(request[0]))
                     {
@@ -79,16 +80,16 @@ namespace HTTPServer
                             {
                                 //Create HTTP not yet implemented header
                                 _response += "HTTP/1.0 200 xxx\r\n";
-                                _response += "Content-Type: text/html\r\n";
                                 _response += "\r\n";
                                 break;
                             }
+                            log.Info("Server response: OK, Content-type: " + ContentType.GetContentType(filename));
                             //Create HTTP header
                             _response += "HTTP/1.0 200 OK\r\n";
-                            _response += "Content-Type: text/html\r\n";
+                            _response += "Content-Type: " + ContentType.GetContentType(filename) + "\r\n";
                             _response += "\r\n";
                             //Create body from the specified file
-                            var fileStream = new FileStream(RootCatalog + request[1], FileMode.Open,
+                            var fileStream = new FileStream(RootCatalog + filename, FileMode.Open,
                                 FileAccess.Read);
                             //New filestream
                             using (var sr2 = new StreamReader(fileStream)) //use a streamreader to read the filestream
