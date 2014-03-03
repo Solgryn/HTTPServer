@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using log4net;
@@ -36,6 +37,7 @@ namespace HTTPServer
             var sr = new StreamReader(ns);
             var sw = new StreamWriter(ns);
 
+            byte[] ar = {};
             var readFirstLine = true; //initialize
             var requestStr = "";
             var request = new[] { "" }; //initialize
@@ -75,7 +77,7 @@ namespace HTTPServer
                         //Does the file exist?
                         if (File.Exists(RootCatalog + request[1]))
                         {
-                            //Is it post?
+                            //Is the request POST? (Only get implemented at the moment)
                             if (request[0] == "POST")
                             {
                                 //Create HTTP not yet implemented header
@@ -83,18 +85,33 @@ namespace HTTPServer
                                 _response += "\r\n";
                                 break;
                             }
+
                             log.Info("Server response: OK, Content-type: " + ContentType.GetContentType(filename));
+                            var fileStream = new FileStream(RootCatalog + filename, FileMode.Open, FileAccess.Read); //Initialize a filestream
                             //Create HTTP header
                             _response += "HTTP/1.0 200 OK\r\n";
                             _response += "Content-Type: " + ContentType.GetContentType(filename) + "\r\n";
+                            _response += "Content-Length: " + fileStream.Length + "\r\n";
+                            _response += "Date: " + DateTime.Now.Date.ToUniversalTime().ToString("r") +"\r\n";
                             _response += "\r\n";
                             //Create body from the specified file
-                            var fileStream = new FileStream(RootCatalog + filename, FileMode.Open,
-                                FileAccess.Read);
-                            //New filestream
-                            using (var sr2 = new StreamReader(fileStream)) //use a streamreader to read the filestream
+                            switch (ContentType.GetContentType(filename)) // depending on the type
                             {
-                                _response += sr2.ReadToEnd(); //add contents to the response string
+                                case "image/jpeg": //if the file is image/jpeg use the filestream
+                                    using (fileStream)
+                                    {
+                                        ar = new byte[fileStream.Length];
+                                        fileStream.Read(ar, 0, (int) fileStream.Length);
+                                    }
+                                    break;
+                                default: //By default use a streamreader
+                                    using (var sr2 = new StreamReader(fileStream))
+                                        //use a streamreader to read the filestream
+                                    {
+                                        _response += sr2.ReadToEnd(); //add contents to the response string
+                                        log.Debug(sr2.ReadToEnd());
+                                    }
+                                    break;
                             }
                             break;
                         }
@@ -114,16 +131,22 @@ namespace HTTPServer
                     break;
                 }
             }
-            try
+            try //Try to send the response
             {
+                if (ar.Length != 0)
+                {
+                    sw.BaseStream.Write(ar, 0, ar.Length);
+                }
+                _response += "\r\n"; //End the response with an empty line
                 sw.Write(_response); //write the response in the streamwriter
                 sw.Flush(); //send the response
                 log.Info("Server response sent");
             }
-            finally
+            finally //Close the connection
             {
-                ns.Close();
                 log.Info("Closed connection");
+                ns.Close(); //Close network stream
+                _connection.Close(); //Close connection socket
             }
         }
     }
