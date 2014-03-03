@@ -4,40 +4,51 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace HTTPServer
 {
     class Client
     {
-        private Socket connection;
-        private static readonly string RootCatalog = "c:/temp";
+        private string _response = "";
+        private readonly Socket _connection;
+        private const string RootCatalog = "c:/temp";
+        private static readonly string[] Methods = new []{"GET", "POST",};
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="connection">The socket connection.</param>
         public Client(Socket connection)
         {
-            this.connection = connection;
+            this._connection = connection;
         }
 
+        /// <summary>
+        /// Runs the client connection.
+        /// </summary>
         public void Run()
         {
-            var response = "";
-            var ns = new NetworkStream(connection);
+            var ns = new NetworkStream(_connection);
             var sr = new StreamReader(ns);
             var sw = new StreamWriter(ns);
 
             var readFirstLine = true; //initialize
+            var requestStr = "";
             var request = new[] { "" }; //initialize
             while (true)
             {
                 var message = sr.ReadLine(); //Get a request
                 if (message != null)
                 {
-                    Console.WriteLine("Client (" + connection.RemoteEndPoint + "): " + message);
+                    Console.WriteLine("Client (" + _connection.RemoteEndPoint + "): '" + message +"'");
                 }
 
                 //Get first line from request
                 if (readFirstLine && message != null)
                 {
+                    requestStr = message;
                     request = message.Split(' '); //split the request up, so the file requested can be read later
                     readFirstLine = false; //don't read anymore lines
                 }
@@ -45,47 +56,69 @@ namespace HTTPServer
                 //Send a response when request is done
                 if (message == "")
                 {
-                    //if (Regex.IsMatch(request, @"GET /[a-z] HTTP/1.0"))
-                    //{
+                    //Is the request in the correct format?
+                    if (Regex.IsMatch(requestStr, @"^[A-Z]{3,4} /.{0,150} HTTP/[0-9]\.[0-9]$") && Methods.Contains(request[0]))
+                    {
+                        //Is it an illegal protocol?
+                        if (request[2] == "HTTP/1.2")
+                        {
+                            Console.WriteLine("Illegal protocol");
+                            //Create HTTP 404 header
+                            _response += "HTTP/1.0 400 Illegal protocol\r\n";
+                            _response += "\r\n";
+                            _response += "<html>400 Illegal protocol</html>";
+                            break;
+                        }
                         //Does the file exist?
                         if (File.Exists(RootCatalog + request[1]))
                         {
+                            //Is it post?
+                            if (request[0] == "POST")
+                            {
+                                //Create HTTP not yet implemented header
+                                _response += "HTTP/1.0 200 xxx\r\n";
+                                _response += "Content-Type: text/html\r\n";
+                                _response += "\r\n";
+                                break;
+                            }
                             //Create HTTP header
-                            response += "HTTP/1.0 200 OK\r\n";
-                            response += "Content-Type: text/html\r\n";
-                            response += "\r\n";
+                            _response += "HTTP/1.0 200 OK\r\n";
+                            _response += "Content-Type: text/html\r\n";
+                            _response += "\r\n";
                             //Create body from the specified file
-                            FileStream fileStream = new FileStream(RootCatalog + request[1], FileMode.Open,
+                            var fileStream = new FileStream(RootCatalog + request[1], FileMode.Open,
                                 FileAccess.Read);
                             //New filestream
                             using (var sr2 = new StreamReader(fileStream)) //use a streamreader to read the filestream
                             {
-                                response += sr2.ReadToEnd(); //add contents to the response string
+                                _response += sr2.ReadToEnd(); //add contents to the response string
                             }
                             break;
                         }
                         else //If the file doesn't exist, return "404 Not Found"
                         {
-                            Console.WriteLine("Not found.");
+                            Console.WriteLine("Not found");
                             //Create HTTP 404 header
-                            response += "HTTP/1.0 404 Not Found\r\n";
-                            response += "\r\n";
-                            response += "<html>404 not found.</html>";
+                            _response += "HTTP/1.0 404 Not Found\r\n";
+                            _response += "\r\n";
+                            _response += "<html>404 Not Found</html>";
                             break;
                         }
-                    /*}
+                    }
                     else
                     {
-                        //Create HTTP 40 header
-                        var response = "";
-                        response += "HTTP/1.0 400 Illegal request\r\n";
-                        response += "\r\n";
-                    }*/
+                        Console.WriteLine("Illegal request");
+                        //Create HTTP 400 header
+                        _response += "HTTP/1.0 400 Illegal request\r\n";
+                        _response += "\r\n";
+                        _response += "<html>400 Illegal Request</html>";
+                        break;
+                    }
                 }
             }
             try
             {
-                sw.Write(response); //write the response in the streamwriter
+                sw.Write(_response); //write the response in the streamwriter
                 sw.Flush(); //send the response
                 Console.WriteLine("Sent response.");
             }

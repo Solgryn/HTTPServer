@@ -13,23 +13,18 @@ namespace HTTPServer
     public class Program
     {
         public static int DefaultPort = 80;
-        static TcpListener serverSocket = new TcpListener(DefaultPort);
+        static readonly TcpListener ServerSocket = new TcpListener(DefaultPort);
 
         static void Main(string[] args)
         {
-            //var testString = "GET /file.txt HTTP/1.0";
-
-            //Console.WriteLine(Regex.IsMatch(testString, @"GET /[a-z] HTTP/1.0"));
-
-            //Console.Read();
-            serverSocket.Start(); //Start listening
+            ServerSocket.Start(); //Start listening
             Console.WriteLine("Started listening.");
 
             while (true)
             {
-                if (serverSocket.Pending())
+                if (ServerSocket.Pending())
                 {
-                    Socket connection = serverSocket.AcceptSocket(); //Accepts a pending connection
+                    Socket connection = ServerSocket.AcceptSocket(); //Accepts a pending connection
                     Console.WriteLine("Socket accepted.");
 
                     var client = new Client(connection);
