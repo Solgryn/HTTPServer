@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace HTTPServer
 {
+    /// <summary>
+    /// The main program class, accepting connections and creating new client threads.
+    /// </summary>
     public class Program
     {
         public static int DefaultPort = 80;

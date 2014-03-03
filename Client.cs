@@ -1,20 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace HTTPServer
 {
+    /// <summary>
+    /// The client class, a connection to a browser client.
+    /// </summary>
     class Client
     {
         private string _response = "";
         private readonly Socket _connection;
         private const string RootCatalog = "c:/temp";
-        private static readonly string[] Methods = new []{"GET", "POST",};
+        private static readonly string[] Methods = {"GET", "POST"};
 
         /// <summary>
         /// Constructor.
@@ -22,7 +22,7 @@ namespace HTTPServer
         /// <param name="connection">The socket connection.</param>
         public Client(Socket connection)
         {
-            this._connection = connection;
+            _connection = connection;
         }
 
         /// <summary>
@@ -95,25 +95,20 @@ namespace HTTPServer
                             }
                             break;
                         }
-                        else //If the file doesn't exist, return "404 Not Found"
-                        {
-                            Console.WriteLine("Not found");
-                            //Create HTTP 404 header
-                            _response += "HTTP/1.0 404 Not Found\r\n";
-                            _response += "\r\n";
-                            _response += "<html>404 Not Found</html>";
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Illegal request");
-                        //Create HTTP 400 header
-                        _response += "HTTP/1.0 400 Illegal request\r\n";
+                        //If the file doesn't exist, return "404 Not Found"
+                        Console.WriteLine("Not found");
+                        //Create HTTP 404 header
+                        _response += "HTTP/1.0 404 Not Found\r\n";
                         _response += "\r\n";
-                        _response += "<html>400 Illegal Request</html>";
+                        _response += "<html>404 Not Found</html>";
                         break;
                     }
+                    Console.WriteLine("Illegal request");
+                    //Create HTTP 400 header
+                    _response += "HTTP/1.0 400 Illegal request\r\n";
+                    _response += "\r\n";
+                    _response += "<html>400 Illegal Request</html>";
+                    break;
                 }
             }
             try
