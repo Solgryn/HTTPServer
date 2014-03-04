@@ -3,12 +3,13 @@ using System.IO;
 
 namespace HTTPServer
 {
-    static class ContentType
+    public static class ContentType
     {
         private static readonly Dictionary<string, string> types = new Dictionary<string, string>();
 
         static ContentType()
         {
+            types.Add("txt", "text/html");
             types.Add("html", "text/html");
             types.Add("htm", "text/html");
             types.Add("doc", "application/msword");

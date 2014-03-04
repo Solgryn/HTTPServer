@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using log4net;
@@ -9,13 +10,14 @@ namespace HTTPServer
     /// <summary>
     /// The client class, a connection to a browser client.
     /// </summary>
-    class Client
+    public class Client
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(Client)); //Logging
         private string _response = ""; //Empty response string, is build upon in Run()
         private readonly Socket _connection; //The connection
         private const string RootCatalog = "c:/temp"; //Where to look for files
         private static readonly string[] Methods = {"GET", "POST"}; //A list of available methods
+        private static readonly string[] Protocols = {"HTTP/1.0", "HTTP/1.1"}; //List of legal protocols
         private NetworkStream _ns; //The network stream
 
         /// <summary>
@@ -40,63 +42,66 @@ namespace HTTPServer
             byte[] ar = {}; //An empty byte array, for picture requests
 
             var message = sr.ReadLine(); //Get a request
-            Log.Info("Client (" + _connection.RemoteEndPoint + ") message: '" + message);
-                
-            //Is the request in the correct format?
-            if (message != null && Regex.IsMatch(message, @"^[A-Z]{3,4} /.{0,150} HTTP/[0-9]\.[0-9]$"))
-            {
-                //Methods.Contains(request[0])
-                string[] request = message.Split(' '); //The request string in parts, to check for file name and method name
-                var filename = request[1]; //The 2nd element of the splitted request string, the filename
+            Log.Info("Client (" + _connection.RemoteEndPoint + ") message: " + message);
 
-                if (request[2] == "HTTP/1.2") //The 3rd element, the protocol
-                {
-                    AddHeaders(400, "Illegal protocol"); //If the protocol is illegal
-                }
-                if (File.Exists(RootCatalog + request[1])) //Does the file exist?
-                {
-                    switch (request[0]) //Do different things for different methods
+            if (message != null)
+            {
+                var request = message.Split(' '); //The request string in parts, to check for file name and method name
+                //Is the request in the correct format?
+                if (Regex.IsMatch(message, @"^[A-Z]{3,4} /.{0,150} HTTP/[0-9]\.[0-9]$") && Methods.Contains(request[0]))
+                {                
+                    var filename = request[1]; //The 2nd element of the splitted request string, the filename
+                    var protocol = request[2]; //The 3rd element, the protocol used in the request
+
+                    if (File.Exists(RootCatalog + filename) && Protocols.Contains(protocol)) //Does the file exist and is it the right protocol
                     {
-                        case "POST":
-                            AddHeaders(200, "xxx"); //Not yet implemented header
-                            break;
-                        case "GET":
-                            var fileStream = new FileStream(RootCatalog + filename, FileMode.Open, FileAccess.Read); //Initialize a filestream
-                            //Create HTTP header
-                            AddHeaders(200, "OK",
-                                new[]{"Content-Type: " + ContentType.GetContentType(filename)
-                                    ,"Content-Length: " + fileStream.Length
-                                    ,"Date: " + DateTime.Now.Date.ToUniversalTime().ToString("r")});
-                            //Create body from the specified file
-                            switch (ContentType.GetContentType(filename)) // depending on the type
-                            {
-                                case "image/jpeg": //if the file is image/jpeg use the filestream
-                                    using (fileStream)
-                                    {
-                                        ar = new byte[fileStream.Length];
-                                        fileStream.Read(ar, 0, (int) fileStream.Length);
-                                    }
-                                    break;
-                                default: //By default use a streamreader
-                                    using (var sr2 = new StreamReader(fileStream))
-                                        //use a streamreader to read the filestream
-                                    {
-                                        _response += sr2.ReadToEnd(); //add contents to the response string
-                                        Log.Debug(sr2.ReadToEnd());
-                                    }
-                                    break;
-                            }
-                            break;
+                        switch (request[0]) //Do different things for different methods
+                        {
+                            case "POST":
+                                AddHeaders(200, "xxx"); //Not yet implemented header
+                                break;
+                            case "GET":
+                                var fileStream = new FileStream(RootCatalog + filename, FileMode.Open, FileAccess.Read); //Initialize a filestream
+                                //Create HTTP header
+                                AddHeaders(200, "OK",
+                                    new[]{"Content-Type: " + ContentType.GetContentType(filename)
+                                        ,"Content-Length: " + fileStream.Length
+                                        ,"Date: " + DateTime.Now.Date.ToUniversalTime().ToString("r")});
+                                //Create body from the specified file
+                                switch (ContentType.GetContentType(filename)) // depending on the type
+                                {
+                                    case "image/jpeg": case "image/gif": //if the file is an image use the filestream
+                                        using (fileStream)
+                                        {
+                                            ar = new byte[fileStream.Length];
+                                            fileStream.Read(ar, 0, (int) fileStream.Length);
+                                        }
+                                        break;
+                                    default: //By default use a streamreader
+                                        using (var sr2 = new StreamReader(fileStream))
+                                            //use a streamreader to read the filestream
+                                        {
+                                            _response += sr2.ReadToEnd(); //add contents to the response string
+                                        }
+                                        break;
+                                }
+                                break;
+                        }
+                    }
+                    else if (!File.Exists(RootCatalog + filename))
+                    {
+                        AddHeaders(404, "Not Found"); //If the file doesn't exist
+                    }
+
+                    if (!Protocols.Contains(protocol))
+                    {
+                        AddHeaders(400, "Illegal protocol"); //If the protocol is illegal
                     }
                 }
                 else
                 {
-                    AddHeaders(404, "Not Found"); //If the file doesn't exist
+                    AddHeaders(400, "Illegal request"); //If the request doesn't match the format
                 }
-            }
-            else
-            {
-                AddHeaders(400, "Illegal request"); //If the request doesn't match the format
             }
 
             try //Try to send the response
@@ -121,7 +126,7 @@ namespace HTTPServer
         public void AddHeaders(int code, string status, string[] extraHeaders = null)
         {
             Log.Info("Server response: " + code + " " + status + ".");
-            _response += "HTTP/1.0 " + code + "" + status + "\r\n";
+            _response += "HTTP/1.0 " + code + " " + status + "\r\n";
 
             if (extraHeaders != null)
                 foreach (var header in extraHeaders)
@@ -132,7 +137,7 @@ namespace HTTPServer
             _response += "\r\n";
             if (code != 200)
             {
-                _response += "<html>" + code + "" + status + "</html>";
+                _response += "<html>" + code + " " + status + "</html>";
             }
         }
 

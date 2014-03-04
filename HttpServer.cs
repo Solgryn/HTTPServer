@@ -33,7 +33,7 @@ namespace HTTPServer
             {
                 if (_serverSocket.Pending())
                 {
-                    Socket connection = _serverSocket.AcceptSocket(); //Accepts a pending connection
+                    var connection = _serverSocket.AcceptSocket(); //Accepts a pending connection
                     Log.Info("Client connected");
 
                     var client = new Client(connection);
