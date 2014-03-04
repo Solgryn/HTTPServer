@@ -1,6 +1,4 @@
-﻿using System.Net.Sockets;
-using log4net;
-using log4net.Config;
+﻿using log4net.Config;
 
 namespace HTTPServer
 {
